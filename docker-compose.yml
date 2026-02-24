@@ -1,0 +1,30 @@
+﻿networks:
+  dev:
+    driver: bridge
+
+services:
+  controllers:
+    image: controllers
+    build:
+      context: .
+      dockerfile: Contloler/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - dev
+
+  blazor:
+    image: frontend
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    ports:
+      - "5001:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - controllers
+    networks:
+      - dev
