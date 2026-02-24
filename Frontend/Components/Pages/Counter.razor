@@ -1,19 +1,90 @@
-﻿@page "/counter"
+﻿@page "/"
 @rendermode InteractiveServer
+@using System.Net.Http.Json
+@inject IHttpClientFactory Factory
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>Nip</PageTitle>
 
-<h1>Counter</h1>
+<h1>Sprawdź firme po NIP</h1>
+<input class ="form-control" @bind ="_nip" placeholder="Wpisz NIP" />
 
-<p role="status">Current count: @currentCount</p>
+<button class="btn btn-primary" @onclick="CheckNip" disabled="@_loading">
+    Sprawdź
+</button>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if (_loading)
+{
+    <p> Ładowanie...</p>
+}
 
+@if (_error != null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+@if (_dto != null)
+{
+    <div class="card mt-3 p-3">
+        <h4>@_dto.result.subject.name</h4>
+        <p><b>NIP:</b> @_dto.result.subject.nip</p>
+        <p><b>Regon:</b> @_dto.result.subject.regon</p>
+        <p><b>Status VAT:</b> @_dto.result.subject.statusVat</p>
+    </div>
+}
 @code {
-    private int currentCount = 0;
+    private string _nip = "";
+    private bool _loading = false;
+    private DataRespone _dto;
+    private string? _error = null;
 
-    private void IncrementCount()
+    private async Task CheckNip()
     {
-        currentCount++;
+        _error = null;
+        _dto = null;
+
+        if (string.IsNullOrEmpty(_nip))
+        {
+            _error = "Podaj nip";
+            return;
+        }
+
+        _loading = true;
+
+        try
+        {
+            var client = Factory.CreateClient("Api");
+
+            var url = $"api/search/nip/{_nip}" ;
+
+            _dto = await client.GetFromJsonAsync<DataRespone>(url);
+        }
+        catch (Exception ex)
+        {
+            _error = "Błąd pobierania danych: " + ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private class DataRespone
+    {
+        public string? code { get; set; }
+        public string? message { get; set; }
+        public ResultDataResponse? result { get; set; }
+    }
+
+    public class ResultDataResponse
+    {
+        public SubjectResponse? subject { get; set; }
+    }
+
+    public class SubjectResponse
+    {
+        public string? name { get; set; }
+        public string? nip { get; set; }
+        public string? regon { get; set; }
+        public string? statusVat { get; set; }
     }
 }

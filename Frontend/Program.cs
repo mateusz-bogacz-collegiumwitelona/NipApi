@@ -6,10 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-//   Configure Kestrel before building the app
-builder.WebHost.ConfigureKestrel(options =>
+builder.Services.AddHttpClient("Api", client =>
 {
-    options.ListenAnyIP(8081);
+    client.BaseAddress = new Uri("http://controllers:8080/");
 });
 
 var app = builder.Build();
